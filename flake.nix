@@ -8,20 +8,21 @@
 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
-      rec {
-        defaultPackage =
-          with import nixpkgs { system = "${system}"; };
-          stdenv.mkDerivation {
-            name = "automatic-restic";
-            src = self;
-            buildInputs = [ restic ];
-            installPhase = "mkdir -p $out/bin; install -t $out/bin run_backup.sh";
-          };
-        apps.automatic-restic = flake-utils.lib.mkApp {
-          drv = defaultPackage;
-          exePath = "/bin/run_backup.sh";
+      let
+        pkgs = import nixpkgs { inherit system; };
+        name = "automatic-restic";
+        script = (pkgs.writeScriptBin name (builtins.readFile ./run_backup.sh)).overrideAttrs(old: {
+            buildCommand = "${old.buildCommand}\n patchShebangs $out";
+          });
+        postBuild = "wrapProgram $out/bin/${name} --prefix PATH : $out/bin";
+        deps = with pkgs; [ restic ];
+      in rec {
+        defaultPackage = packages."${name}";
+        packages."${name}" = pkgs.symlinkJoin {
+          inherit name postBuild;
+          buildInputs = [ pkgs.makeWrapper ];
+          paths = [ script ] ++ deps;
         };
-        defaultApp = apps.automatic-restic;
       }
     );
 }
