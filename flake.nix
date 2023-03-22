@@ -14,6 +14,7 @@
           stdenv.mkDerivation {
             name = "automatic-restic";
             src = self;
+            buildInputs = [ restic ];
             installPhase = "mkdir -p $out/bin; install -t $out/bin run_backup.sh";
           };
         apps.automatic-restic = flake-utils.lib.mkApp {
