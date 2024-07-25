@@ -29,6 +29,7 @@ function main() {
            -e "$HOME/.rustup/" \
            -e "$HOME/.cabal/" \
            -e "$HOME/.cargo/" \
+           -e "$HOME/.local" \
            "$HOME" \
            "/data/content/"
 }
